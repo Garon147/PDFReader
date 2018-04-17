@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">PdfReader</string>
+    <string name="open_pdf">Open file</string>
+    <string name="close_app">Exit</string>
+    <string name="search">Search page</string>
+    <string name="single_mode">Single page mode</string>
+    <string name="all_mode">All pages mode</string>
+    <string name="search_page_hint">Enter page number</string>
+</resources>
