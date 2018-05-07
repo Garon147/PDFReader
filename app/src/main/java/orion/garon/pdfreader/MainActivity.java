@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.graphics.Bitmap;
@@ -45,10 +46,12 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
+    static final String FILE_PATH_KEY = "file_path";
+
     private DrawerLayout mDrawerLayout;
     private SlidePageFragment slidePageFragment;
     private SearchAlertDialog searchAlertDialog;
-    private int pageNumber;
+    private String filePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
                         checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                                 != PackageManager.PERMISSION_GRANTED) {
 
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1001);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        1001);
         }
 
         android.support.v7.widget.Toolbar toolbar = findViewById(R.id.toolbar);
@@ -81,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        loadPreferences();
     }
 
     @Override
@@ -157,34 +163,28 @@ public class MainActivity extends AppCompatActivity {
             switch (requestCode) {
 
                 case 1000:
-                    String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
-
-                    Bundle fragmentBundle = new Bundle();
-                    fragmentBundle.putString("File_path", filePath);
-
-                    slidePageFragment = new SlidePageFragment();
-                    slidePageFragment.setArguments(fragmentBundle);
-                    FragmentManager manager = getFragmentManager();
-                    FragmentTransaction transaction = manager.beginTransaction();
-                    transaction.add(R.id.contentLayout, slidePageFragment, "content_fragment");
-                    transaction.addToBackStack(null);
-                    transaction.commit();
+                    filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+                    openPdfFragment(filePath);
                     break;
             }
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
 
         switch (requestCode) {
 
             case 1001:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "Permission granted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Permission granted!",
+                            Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    Toast.makeText(this, "Permission not granted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Permission not granted!",
+                            Toast.LENGTH_SHORT).show();
                 }
         }
     }
@@ -206,10 +206,25 @@ public class MainActivity extends AppCompatActivity {
         slidePageFragment.pdfView.jumpTo(pageNumber, true);
     }
 
-//    private void savePreferences() {
-//
-//        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//        editor.putString()
-//    }
+    private void loadPreferences() {
+
+        SharedPreferences sharedPreferences = getSharedPreferences(FILE_PATH_KEY, MODE_PRIVATE);
+        filePath = sharedPreferences.getString(FILE_PATH_KEY, "");
+
+        openPdfFragment(filePath);
+    }
+
+    private void openPdfFragment(String filePath) {
+
+        Bundle fragmentBundle = new Bundle();
+        fragmentBundle.putString("File_path", filePath);
+
+        slidePageFragment = new SlidePageFragment();
+        slidePageFragment.setArguments(fragmentBundle);
+        FragmentManager manager = getFragmentManager();
+        FragmentTransaction transaction = manager.beginTransaction();
+        transaction.add(R.id.contentLayout, slidePageFragment, "content_fragment");
+        transaction.addToBackStack(null);
+        transaction.commit();
+    }
 }
