@@ -11,17 +11,22 @@ import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
+import com.github.barteksc.pdfviewer.listener.OnTapListener;
 import com.nbsp.materialfilepicker.MaterialFilePicker;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.PdfiumCore;
+
+import junit.framework.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,10 +43,12 @@ import static android.app.Activity.RESULT_OK;
 
 public class SlidePageFragment extends Fragment implements OnLoadCompleteListener{
 
-    public PDFView pdfView;
+//    public PDFView pdfView;
+    public PDFViewLockable pdfView;
     private PDFFileState mCurrentFileState;
 
     private String filePath;
+    private boolean touchEnabled;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -85,10 +92,10 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
             switch (newFileState) {
 
                 case ALL_PAGES:
-                    pdfView.enableSwipe(true);
+                    pdfView.setScrollingEnabled(true);
                     break;
                 case SINGLE_PAGE:
-                    pdfView.enableSwipe(false);
+                    pdfView.setScrollingEnabled(false);
                     break;
             }
         }
