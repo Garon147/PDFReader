@@ -5,11 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <orion.garon.pdfreader.PDFViewLockable
+    <com.github.barteksc.pdfviewer.PDFView
         android:id="@+id/pdf_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </orion.garon.pdfreader.PDFViewLockable>
+    </com.github.barteksc.pdfviewer.PDFView>
+
+    <ImageView
+        android:id="@+id/pdf_single_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>

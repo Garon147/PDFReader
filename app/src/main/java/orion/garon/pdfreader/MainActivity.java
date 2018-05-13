@@ -7,6 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.pdf.PdfRenderer;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -29,6 +33,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -42,6 +47,7 @@ import com.shockwave.pdfium.PdfiumCore;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
@@ -53,10 +59,27 @@ public class MainActivity extends AppCompatActivity {
     private SearchAlertDialog searchAlertDialog;
     private String filePath;
 
+    private Button mButtonPageUp;
+    private Button mButtonPageDown;
+    private ArrayList<Button> buttonArrayList = new ArrayList<>();
+
+    public int mCurrentPageNumber;
+    private PdfRenderer renderer;
+    private boolean isRendererCreated;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mButtonPageUp = findViewById(R.id.page_up);
+        mButtonPageDown = findViewById(R.id.page_down);
+        buttonArrayList.add(mButtonPageUp);
+        buttonArrayList.add(mButtonPageDown);
+        mCurrentPageNumber = 0;
+
+
 
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M &&
                         checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -87,6 +110,36 @@ public class MainActivity extends AppCompatActivity {
         );
 
         loadPreferences();
+
+        setButtonListeners();
+    }
+
+    private void setButtonListeners () {
+
+        mButtonPageUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                int currentPage = mCurrentPageNumber - 1;
+                if (currentPage == 0) {
+                    currentPage++;
+                }
+                setPageNumber(currentPage);
+            }
+        });
+
+        mButtonPageDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                int currentPage = mCurrentPageNumber + 1;
+                if (currentPage == 1) {
+
+                    currentPage++;
+                }
+                setPageNumber(currentPage);
+            }
+        });
     }
 
     @Override
@@ -119,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
                 if (slidePageFragment != null) {
 
                     slidePageFragment.setCurrentFileState(PDFFileState.SINGLE_PAGE);
+
                     return true;
                 } else {
                     return false;
@@ -191,19 +245,36 @@ public class MainActivity extends AppCompatActivity {
 
     public void setPageNumber(int pageNumber) {
 
-        searchAlertDialog.dismiss();
+        if (mCurrentPageNumber != pageNumber) {
 
-        switch (pageNumber) {
+            if (searchAlertDialog != null) {
 
-            case 0:
-                pageNumber = 0;
-                break;
+                searchAlertDialog.dismiss();
+            }
 
-            default:
-                pageNumber--;
-                break;
+            mCurrentPageNumber = pageNumber;
+
+            switch (pageNumber) {
+
+                case 0:
+                    pageNumber = 0;
+                    break;
+
+                default:
+                    pageNumber--;
+                    break;
+            }
+
+            slidePageFragment.pdfView.jumpTo(pageNumber, true);
         }
-        slidePageFragment.pdfView.jumpTo(pageNumber, true);
+    }
+
+    public void changeButtonsVisbility (int visibility) {
+
+        for (Button button : buttonArrayList) {
+
+            button.setVisibility(visibility);
+        }
     }
 
     private void loadPreferences() {

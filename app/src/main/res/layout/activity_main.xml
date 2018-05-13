@@ -18,17 +18,25 @@
             android:background="?attr/colorPrimary"
             android:theme="@style/ThemeOverlay.AppCompat.ActionBar">
 
-            <Button
-                android:id="@+id/page_up"
-                android:drawableLeft="@android:drawable/arrow_up_float"
-                android:layout_width="15dp"
-                android:layout_height="11dp" />
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
-            <Button
-                android:id="@+id/page_down"
-                android:drawableLeft="@android:drawable/arrow_down_float"
-                android:layout_width="15dp"
-                android:layout_height="11dp" />
+                <Button
+                    android:id="@+id/page_up"
+                    android:drawableLeft="@android:drawable/arrow_up_float"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"/>
+
+                <Button
+                    android:id="@+id/page_down"
+                    android:drawableLeft="@android:drawable/arrow_down_float"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@+id/page_up"/>
+
+            </RelativeLayout>
 
         </android.support.v7.widget.Toolbar>
 
