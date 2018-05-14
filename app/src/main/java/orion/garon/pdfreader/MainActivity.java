@@ -45,6 +45,8 @@ import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.PdfiumCore;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,11 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
     private Button mButtonPageUp;
     private Button mButtonPageDown;
+    private TextView mPageCounter;
     private ArrayList<Button> buttonArrayList = new ArrayList<>();
 
     public int mCurrentPageNumber;
-    private PdfRenderer renderer;
-    private boolean isRendererCreated;
 
 
     @Override
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         buttonArrayList.add(mButtonPageDown);
         mCurrentPageNumber = 0;
 
-
+        mPageCounter = findViewById(R.id.pages_counter);
 
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M &&
                         checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -120,11 +121,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                int currentPage = mCurrentPageNumber - 1;
-                if (currentPage == 0) {
-                    currentPage++;
-                }
-                setPageNumber(currentPage);
+                int currentPage = slidePageFragment.pdfView.getCurrentPage();
+                currentPage--;
+                setPageNumber(currentPage, false);
             }
         });
 
@@ -132,12 +131,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                int currentPage = mCurrentPageNumber + 1;
-                if (currentPage == 1) {
-
-                    currentPage++;
-                }
-                setPageNumber(currentPage);
+                int currentPage = slidePageFragment.pdfView.getCurrentPage();
+                currentPage++;
+                setPageNumber(currentPage, false);
             }
         });
     }
@@ -243,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void setPageNumber(int pageNumber) {
+    public void setPageNumber(int pageNumber, boolean isFromSearch) {
 
         if (mCurrentPageNumber != pageNumber) {
 
@@ -254,18 +250,25 @@ public class MainActivity extends AppCompatActivity {
 
             mCurrentPageNumber = pageNumber;
 
-            switch (pageNumber) {
+            if (isFromSearch) {
 
-                case 0:
-                    pageNumber = 0;
-                    break;
+                switch (pageNumber) {
 
-                default:
-                    pageNumber--;
-                    break;
+                    case 0:
+                        pageNumber = 0;
+                        break;
+
+                    default:
+                        pageNumber--;
+                        break;
+                }
+
+                mCurrentPageNumber = pageNumber;
             }
 
+
             slidePageFragment.pdfView.jumpTo(pageNumber, true);
+            setTextCounter();
         }
     }
 
@@ -297,5 +300,15 @@ public class MainActivity extends AppCompatActivity {
         transaction.add(R.id.contentLayout, slidePageFragment, "content_fragment");
         transaction.addToBackStack(null);
         transaction.commit();
+    }
+
+    public void setTextCounter() {
+
+        if (mPageCounter != null) {
+
+            String currentPageNumber = String.valueOf(slidePageFragment.pdfView.getCurrentPage() + 1);
+            String allPagesNumber = String.valueOf(slidePageFragment.pdfView.getPageCount());
+            mPageCounter.setText(currentPageNumber+"/"+allPagesNumber);
+        }
     }
 }

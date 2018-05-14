@@ -1,48 +1,21 @@
 package orion.garon.pdfreader;
 
 import android.app.Fragment;
-import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.pdf.PdfRenderer;
-import android.media.Image;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
-import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ImageView;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.link.DefaultLinkHandler;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
-import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
-import com.nbsp.materialfilepicker.MaterialFilePicker;
-import com.nbsp.materialfilepicker.ui.FilePickerActivity;
-
-import junit.framework.Test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.regex.Pattern;
-
-import static android.app.Activity.RESULT_OK;
 import static android.content.Context.MODE_PRIVATE;
 import static orion.garon.pdfreader.MainActivity.FILE_PATH_KEY;
 
@@ -53,6 +26,7 @@ import static orion.garon.pdfreader.MainActivity.FILE_PATH_KEY;
 public class SlidePageFragment extends Fragment implements OnLoadCompleteListener {
 
     final String CURRENT_PAGE_KEY = "current_page";
+    final String CURRENT_STATE = "current_state";
 
     public PDFView pdfView;
     public ImageView pdfSingleView;
@@ -63,9 +37,6 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
 
     private String filePath;
     private MainActivity mainActivity;
-    private OnPageChangeListener onPageChangeListener;
-    private boolean isStateChanging;
-    private boolean needSetPage;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,19 +54,6 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
                              @Nullable Bundle savedInstanceState) {
 
         mainActivity = (MainActivity) getActivity();
-        onPageChangeListener = new OnPageChangeListener() {
-            @Override
-            public void onPageChanged(int page, int pageCount) {
-
-                if (!isStateChanging) {
-                    mCurrentPageNumber = page;
-                }
-
-                if (needSetPage) {
-                    mainActivity.setPageNumber(page);
-                }
-            }
-        };
 
         ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_page,
                                                           container,
@@ -121,17 +79,6 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
 
         if (pdfFile.exists()) {
 
-            try {
-
-                mPdfRenderer = new PdfRenderer(ParcelFileDescriptor.open(pdfFile,
-                        ParcelFileDescriptor.MODE_READ_ONLY));
-            } catch (Exception e) {
-
-                e.printStackTrace();
-            }
-
-
-
             switch (getCurrentFileState()) {
 
                 case ALL_PAGES:
@@ -155,14 +102,17 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
                             pageFling(true).
                             pageSnap(true).
                             autoSpacing(true).
-                            onPageChange(onPageChangeListener).
+                            onLoad(new OnLoadCompleteListener() {
+                                @Override
+                                public void loadComplete(int nbPages) {
+                                    mCurrentPageNumber = pdfView.getCurrentPage();
+                                    mainActivity.setPageNumber(mCurrentPageNumber, false);
+                                }
+                            }).
                             load();
                     break;
             }
 
-
-
-            setCurrentFileState(PDFFileState.ALL_PAGES);
             savePreferences();
         }
     }
@@ -187,8 +137,6 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
                             load();
                     break;
                 case SINGLE_PAGE:
-                    isStateChanging = true;
-                    needSetPage = false;
                     pdfView.fromFile(pdfFile).
                             defaultPage(mCurrentPageNumber).
                             linkHandler(new DefaultLinkHandler(pdfView)).
@@ -196,14 +144,11 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
                             pageFling(true).
                             pageSnap(true).
                             autoSpacing(true).
-                            onPageChange(onPageChangeListener).
                             onLoad(new OnLoadCompleteListener() {
                                 @Override
                                 public void loadComplete(int nbPages) {
-                                    isStateChanging = false;
                                     mCurrentPageNumber = pdfView.getCurrentPage();
-                                    mainActivity.setPageNumber(mCurrentPageNumber);
-                                    needSetPage = true;
+                                    mainActivity.setPageNumber(mCurrentPageNumber, false);
                                 }
                             }).
                             load();
@@ -236,6 +181,8 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
         editor.putString(FILE_PATH_KEY, filePath);
         int currentPage = pdfView.getCurrentPage();
         editor.putInt(CURRENT_PAGE_KEY, currentPage);
+        PDFFileState currentState = getCurrentFileState();
+        editor.putInt(CURRENT_STATE, PDFFileState.intFromState(currentState));
         editor.apply();
     }
 
@@ -243,5 +190,6 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
 
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences(FILE_PATH_KEY, MODE_PRIVATE);
         mCurrentPageNumber = sharedPreferences.getInt(CURRENT_PAGE_KEY, 0);
+        mCurrentFileState = PDFFileState.stateFromInt(sharedPreferences.getInt(CURRENT_STATE, 0));
     }
 }

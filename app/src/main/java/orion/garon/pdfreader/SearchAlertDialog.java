@@ -45,7 +45,7 @@ public class SearchAlertDialog extends DialogFragment {
                 if ((keyEvent != null && (keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER)) ||
                         (i == EditorInfo.IME_ACTION_SEARCH)) {
                     int pageNumber = Integer.parseInt(searchText.getText().toString());
-                    ((MainActivity) getActivity()).setPageNumber(pageNumber);
+                    ((MainActivity) getActivity()).setPageNumber(pageNumber, true);
                 }
 
                 return false;
