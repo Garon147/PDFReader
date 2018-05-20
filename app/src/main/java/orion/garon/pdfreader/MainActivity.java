@@ -31,6 +31,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -64,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mButtonPageUp;
     private Button mButtonPageDown;
     private TextView mPageCounter;
-    private ArrayList<Button> buttonArrayList = new ArrayList<>();
+    private ArrayList<View> buttonArrayList = new ArrayList<>();
 
     public int mCurrentPageNumber;
 
@@ -81,6 +82,14 @@ public class MainActivity extends AppCompatActivity {
         mCurrentPageNumber = 0;
 
         mPageCounter = findViewById(R.id.pages_counter);
+        mPageCounter.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                createSearchAlertDialog();
+                return false;
+            }
+        });
+        buttonArrayList.add(mPageCounter);
 
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M &&
                         checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -150,8 +159,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.search:
                 if (slidePageFragment != null) {
 
-                    searchAlertDialog = new SearchAlertDialog();
-                    searchAlertDialog.show(getFragmentManager(), "search_fragment");
+                    createSearchAlertDialog();
                     return true;
                 } else {
                     return false;
@@ -190,9 +198,20 @@ public class MainActivity extends AppCompatActivity {
                         .start();
                 break;
             case R.id.exit:
-                System.exit(0);
+                exit();
                 break;
         }
+    }
+
+    private void createSearchAlertDialog() {
+
+        searchAlertDialog = new SearchAlertDialog();
+        searchAlertDialog.show(getFragmentManager(), "search_fragment");
+    }
+
+    private void exit() {
+
+        finish();
     }
 
     @Override
@@ -272,11 +291,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void changeButtonsVisbility (int visibility) {
+    public void changeViewsVisbility (int visibility) {
 
-        for (Button button : buttonArrayList) {
+        for (View view : buttonArrayList) {
 
-            button.setVisibility(visibility);
+            view.setVisibility(visibility);
         }
     }
 
@@ -309,6 +328,13 @@ public class MainActivity extends AppCompatActivity {
             String currentPageNumber = String.valueOf(slidePageFragment.pdfView.getCurrentPage() + 1);
             String allPagesNumber = String.valueOf(slidePageFragment.pdfView.getPageCount());
             mPageCounter.setText(currentPageNumber+"/"+allPagesNumber);
+            mPageCounter.refreshDrawableState();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        exit();
     }
 }

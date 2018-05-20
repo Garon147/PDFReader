@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.link.DefaultLinkHandler;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
+import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
+import com.github.barteksc.pdfviewer.listener.OnPageScrollListener;
 
 import java.io.File;
 import static android.content.Context.MODE_PRIVATE;
@@ -32,7 +34,6 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
     public ImageView pdfSingleView;
     private PDFFileState mCurrentFileState;
     public int mCurrentPageNumber;
-    public PdfRenderer mPdfRenderer;
     public File pdfFile;
 
     private String filePath;
@@ -60,8 +61,7 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
                                                          false);
         pdfView = rootView.findViewById(R.id.pdf_view);
         pdfSingleView = rootView.findViewById(R.id.pdf_single_view);
-//        mCurrentFileState = PDFFileState.ALL_PAGES;
-        mainActivity.changeButtonsVisbility(View.INVISIBLE);
+        mainActivity.changeViewsVisbility(View.INVISIBLE);
         openPdf();
         return rootView;
     }
@@ -79,39 +79,7 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
 
         if (pdfFile.exists()) {
 
-            switch (getCurrentFileState()) {
-
-                case ALL_PAGES:
-                    mainActivity.changeButtonsVisbility(View.INVISIBLE);
-                    pdfView.fromFile(pdfFile).
-                            defaultPage(mCurrentPageNumber).
-                            linkHandler(new DefaultLinkHandler(pdfView)).
-//                            swipeHorizontal(false).
-                            pageFling(false).
-                            pageSnap(false).
-                            autoSpacing(false).
-                            load();
-                    break;
-                case SINGLE_PAGE:
-                    mainActivity.changeButtonsVisbility(View.VISIBLE);
-                    mCurrentPageNumber = pdfView.getCurrentPage();
-                    pdfView.fromFile(pdfFile).
-                            defaultPage(mCurrentPageNumber).
-                            linkHandler(new DefaultLinkHandler(pdfView)).
-//                            swipeHorizontal(true).
-                            pageFling(true).
-                            pageSnap(true).
-                            autoSpacing(true).
-                            onLoad(new OnLoadCompleteListener() {
-                                @Override
-                                public void loadComplete(int nbPages) {
-                                    mCurrentPageNumber = pdfView.getCurrentPage();
-                                    mainActivity.setPageNumber(mCurrentPageNumber, false);
-                                }
-                            }).
-                            load();
-                    break;
-            }
+            setPdfViewParameters(getCurrentFileState());
 
             savePreferences();
         }
@@ -121,40 +89,69 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
 
         if (mCurrentFileState != newFileState) {
 
+            mCurrentPageNumber = pdfView.getCurrentPage();
+
             mCurrentFileState = newFileState;
 
-            switch (newFileState) {
+            setPdfViewParameters(newFileState);
+        }
+    }
 
-                case ALL_PAGES:
-                    mainActivity.changeButtonsVisbility(View.INVISIBLE);
-                    pdfView.fromFile(pdfFile).
-                            defaultPage(mCurrentPageNumber).
-                            linkHandler(new DefaultLinkHandler(pdfView)).
-//                            swipeHorizontal(false).
-                            pageFling(false).
-                            pageSnap(false).
-                            autoSpacing(false).
-                            load();
-                    break;
-                case SINGLE_PAGE:
-                    pdfView.fromFile(pdfFile).
-                            defaultPage(mCurrentPageNumber).
-                            linkHandler(new DefaultLinkHandler(pdfView)).
-//                            swipeHorizontal(true).
-                            pageFling(true).
-                            pageSnap(true).
-                            autoSpacing(true).
-                            onLoad(new OnLoadCompleteListener() {
-                                @Override
-                                public void loadComplete(int nbPages) {
-                                    mCurrentPageNumber = pdfView.getCurrentPage();
-                                    mainActivity.setPageNumber(mCurrentPageNumber, false);
-                                }
-                            }).
-                            load();
-                    mainActivity.changeButtonsVisbility(View.VISIBLE);
-                    break;
-            }
+    private void setPdfViewParameters (PDFFileState fileState) {
+
+        switch (fileState) {
+
+            case ALL_PAGES:
+                mainActivity.changeViewsVisbility(View.INVISIBLE);
+                pdfView.fromFile(pdfFile).
+                        defaultPage(mCurrentPageNumber).
+                        linkHandler(new DefaultLinkHandler(pdfView)).
+                        pageFling(false).
+                        pageSnap(false).
+                        autoSpacing(false).
+                        onPageScroll(new OnPageScrollListener() {
+                            @Override
+                            public void onPageScrolled(int page, float positionOffset) {
+                                mainActivity.setTextCounter();
+                            }
+                        }).
+                        onLoad(new OnLoadCompleteListener() {
+                            @Override
+                            public void loadComplete(int nbPages) {
+                                mainActivity.setTextCounter();
+                            }
+                        }).
+                        load();
+                break;
+            case SINGLE_PAGE:
+                mainActivity.changeViewsVisbility(View.VISIBLE);
+                pdfView.fromFile(pdfFile).
+                        defaultPage(mCurrentPageNumber).
+                        linkHandler(new DefaultLinkHandler(pdfView)).
+                        pageFling(true).
+                        pageSnap(true).
+                        autoSpacing(true).
+                        onLoad(new OnLoadCompleteListener() {
+                            @Override
+                            public void loadComplete(int nbPages) {
+                                mCurrentPageNumber = pdfView.getCurrentPage();
+                                mainActivity.setPageNumber(mCurrentPageNumber, false);
+                            }
+                        }).
+                        onPageChange(new OnPageChangeListener() {
+                            @Override
+                            public void onPageChanged(int page, int pageCount) {
+                                mainActivity.setTextCounter();
+                            }
+                        }).
+                        onLoad(new OnLoadCompleteListener() {
+                            @Override
+                            public void loadComplete(int nbPages) {
+                                mainActivity.setTextCounter();
+                            }
+                        }).
+                        load();
+                break;
         }
     }
 
