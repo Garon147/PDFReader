@@ -36,7 +36,7 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
     public int mCurrentPageNumber;
     public File pdfFile;
 
-    private String filePath;
+    private String mFilePath;
     private MainActivity mainActivity;
 
     @Override
@@ -44,8 +44,8 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
         super.onCreate(savedInstanceState);
 
         Bundle receivedBundle = getArguments();
-        filePath = receivedBundle.getString("File_path");
         loadPreferences();
+        setFilePath(receivedBundle.getString("File_path"));
     }
 
     @Nullable
@@ -75,7 +75,7 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
 
     void openPdf() {
 
-        pdfFile = new File(filePath);
+        pdfFile = new File(mFilePath);
 
         if (pdfFile.exists()) {
 
@@ -94,6 +94,14 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
             mCurrentFileState = newFileState;
 
             setPdfViewParameters(newFileState);
+        }
+    }
+
+    private void setFilePath (String filePath) {
+
+        if (mFilePath == null || !mFilePath.equals(filePath)) {
+
+            mFilePath = filePath;
         }
     }
 
@@ -175,7 +183,7 @@ public class SlidePageFragment extends Fragment implements OnLoadCompleteListene
     private void savePreferences() {
 
         SharedPreferences.Editor editor = getActivity().getSharedPreferences(FILE_PATH_KEY, MODE_PRIVATE).edit();
-        editor.putString(FILE_PATH_KEY, filePath);
+        editor.putString(FILE_PATH_KEY, mFilePath);
         int currentPage = pdfView.getCurrentPage();
         editor.putInt(CURRENT_PAGE_KEY, currentPage);
         PDFFileState currentState = getCurrentFileState();
